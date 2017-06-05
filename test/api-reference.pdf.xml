@@ -1,0 +1,55 @@
+<pdf>
+    <head>
+        <document size="A4"/>
+        <title>API Reference</title>
+        <meta>
+            <author>Paul Winkler</author>
+            <subject>express-hogan-pdf API Reference</subject>
+            <keywords>express, Hogan.js, PDF, PDFKit</keywords>
+        </meta>
+        <styles>
+            <code
+                extends="p"
+                backgroundColor="grey"
+                marginLeft="5"
+                padding="10"
+                border="1"
+                size="9"
+                font="fixed"
+                margin="5"
+                trim="false"/>
+        </styles>
+    </head>
+    <page>
+        <h1>express-hogan-pdf API Reference</h1>
+
+        <h2>Usage</h2>
+        <h3>Using as an express view engine</h3>
+        <code>
+app.engine('pdfxml', require('express-hogan-pdf'));
+app.set('views', './views');
+app.set('view engine', 'pdfxml');
+
+app.get('/pdf', (req, res, next) =&gt; {
+    res.locals.key = 'value';
+    res.render('template.pdf.xml');
+});
+        </code>
+
+        <h3>Generating a PDF stream, buffer, or file</h3>
+        <code>
+const hoganPdf = require('express-hogan-pdf');
+
+const locals = { key: 'value' };
+
+hoganPdf.fileToStream('source.pdf.xml', locals, (err, stream) =&gt; {
+});
+
+hoganPdf.fileToBuffer('source.pdf.xml', locals, (err, buffer) =&gt; {
+});
+
+hoganPdf.fileToFile('source.pdf.xml', locals, 'dest.pdf', (err) =&gt; {
+});
+        </code>
+    </page>
+</pdf>
