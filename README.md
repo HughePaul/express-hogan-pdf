@@ -7,7 +7,31 @@ app.engine('pdfxml', require('express-hogan-pdf').engine);
 
 app.get('/download-pdf', (req, res, next) => {
     res.attachment('filename.pdf');
-    res.render('template.pdfxml');
+    res.render('template.pdfxml', { title: 'Hello World' });
+});
+
+```
+
+## Usage as a function
+```
+const pdf = require('express-hogan-pdf');
+
+pdf.fileToStream(filePath, locals, (err, stream) => {});
+pdf.fileToBuffer(filePath, locals, (err, buffer) => {});
+pdf.fileToFile(filePath, locals, destFile, (err) => {});
+
+```
+
+## Usage as an express streaming engine
+```
+app.get('/download-pdf', (req, res, next) => {
+    res.render('template.pdfxml',
+        { title: 'Hello World', stream: true },
+        (err, stream) => {
+            if (err) return next(err);
+            res.attachment(stream.filename);
+            stream.pipe(res);
+        });
 });
 
 ```
@@ -16,15 +40,17 @@ app.get('/download-pdf', (req, res, next) => {
 ``` filename.pdfxml
 <pdf>
   <config>
+    <filename>my-file.pdf</filename>
     <document size="A4" marginBottom="50">
-    <title>Test Template</title>
+    <title>{{title}}</title>
     <colors darkred="#800"/>
     <styles>
 
     </styles>
   </config>
   <page>
-    <h1>Page 1</h1>
+    <h1>{{title}}</h1>
+    <h2>Page 1</h2>
     <indent>
       <p>Indented text</p>
     </indent>
