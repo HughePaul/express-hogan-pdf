@@ -1,0 +1,44 @@
+{
+  "name": "express-hogan-pdf",
+  "version": "0.0.1",
+  "description": "PDF generation using Hogan.js to template XML. Can be used as an express view engine or can output to a PDF stream, buffer, or file",
+  "main": "lib/generate.js",
+  "scripts": {
+    "test": "run-s test:lint test:unit test:cover test:cover-check",
+    "test:lint": "eslint .",
+    "test:unit": "mocha test/unit --recursive --require test/unit/helper",
+    "test:cover": "istanbul cover _mocha -- -R dot test/unit --recursive --require test/unit/helper",
+    "test:cover-check": "istanbul check-coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HughePaul/express-hogan-pdf.git"
+  },
+  "author": "Paul Winkler",
+  "license": "MIT",
+  "engines": {
+    "node": ">=4"
+  },
+  "bugs": {
+    "url": "https://github.com/HughePaul/express-hogan-pdf/issues"
+  },
+  "homepage": "https://github.com/HughePaul/express-hogan-pdf",
+  "dependencies": {
+    "concat-stream": "^1.6.0",
+    "debug": "^2.1.2",
+    "deep-extend": "^0.5.0",
+    "hogan.js": "^3.0.2",
+    "pdfkit": "^0.8.1",
+    "underscore": "^1.8.2",
+    "xml2js": "^0.4.17"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "eslint": "^3.13.1",
+    "istanbul": "^0.4.3",
+    "mocha": "^3.1.2",
+    "npm-run-all": "^4.0.2",
+    "sinon": "^1.14.1",
+    "sinon-chai": "^2.7.0"
+  }
+}
