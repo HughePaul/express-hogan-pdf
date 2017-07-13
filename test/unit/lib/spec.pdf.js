@@ -373,8 +373,7 @@ describe('pdf', () => {
                 paddingRight: 0,
                 paddingTop: 0,
                 pre: false,
-                size: 12,
-                trim: true
+                size: 12
             });
         });
 
@@ -393,8 +392,7 @@ describe('pdf', () => {
                 paddingRight: 0,
                 paddingTop: 0,
                 pre: false,
-                size: 12,
-                trim: true
+                size: 12
             });
         });
 
@@ -417,8 +415,7 @@ describe('pdf', () => {
                 paddingRight: 0,
                 paddingTop: 0,
                 pre: false,
-                size: 12,
-                trim: true
+                size: 12
             });
         });
 
