@@ -1,6 +1,6 @@
 {
   "name": "express-hogan-pdf",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "PDF generation using Hogan.js to template XML. Can be used as an express view engine or can output to a PDF stream, buffer, or file",
   "main": "lib/generate.js",
   "scripts": {
