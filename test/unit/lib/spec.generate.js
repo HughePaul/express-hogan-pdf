@@ -1,18 +1,23 @@
 'use strict';
 
+let sinon = require('sinon');
+const chai = require('chai');
+chai.should();
+chai.use(require('sinon-chai'));
+
 const fs = require('fs');
 const generate = require('../../../lib/generate');
 const Hogan = require('hogan.js');
-const unmarshal = require('../../../lib/unmarshal');
-const PDF = require('../../../lib/pdf');
-const ConcatStream = new require('concat-stream');
+const xmlToPdf = require('xml-to-pdf');
 
 describe('generate', () => {
     let stubs, filename, locals, callback;
 
     beforeEach(() => {
         stubs = {};
-        filename = 'filename';
+        stubs.compiled = {};
+        stubs.rendered = '<pdf>Rendered</pdf>';
+        filename = 'path/to/filename.xml';
         locals = {
             foo: 'bar',
             partials: {
@@ -24,9 +29,7 @@ describe('generate', () => {
 
     describe('compile', () => {
         beforeEach(() => {
-            stubs.compiled = {};
             sinon.stub(Hogan, 'compile').returns(stubs.compiled);
-
             stubs.fileData = new Buffer('<pdf>fileData</pdf>');
             sinon.stub(fs, 'readFile').yields(null, stubs.fileData);
         });
@@ -92,14 +95,10 @@ describe('generate', () => {
 
             stubs.rendered = '<pdf>Rendered</pdf>';
             stubs.template.render.returns(stubs.rendered);
-
-            stubs.obj = {};
-            sinon.stub(unmarshal, 'xmlToObject').yields(null, stubs.obj);
         });
 
         afterEach(() => {
             generate.compile.restore();
-            unmarshal.xmlToObject.restore();
         });
 
         it('should be a function with 3 arguments', () => {
@@ -136,31 +135,21 @@ describe('generate', () => {
             callback.should.have.been.calledWithExactly(err);
         });
 
-        it('should unmarshal the compiled xml to an object', () => {
+        it('should callback the rendered xml', () => {
             generate.render(filename, locals, callback);
-            unmarshal.xmlToObject.should.have.been.calledWithExactly(stubs.rendered, sinon.match.func);
-        });
-
-        it('should callback an unmarshalling error', () => {
-            let err = new Error();
-            unmarshal.xmlToObject.yields(err);
-            generate.render(filename, locals, callback);
-            callback.should.have.been.calledWithExactly(err);
+            callback.should.have.been.calledWithExactly(null, stubs.rendered);
         });
     });
 
     describe('fileToStream', () => {
         beforeEach(() => {
-            stubs.obj = {};
-            sinon.stub(generate, 'render').yields(null, stubs.obj);
-
-            stubs.doc = {};
-            sinon.stub(PDF.prototype, 'render').returns(stubs.doc);
+            sinon.stub(generate, 'render').yields(null, stubs.rendered);
+            sinon.stub(xmlToPdf, 'toStream');
         });
 
         afterEach(() => {
             generate.render.restore();
-            PDF.prototype.render.restore();
+            xmlToPdf.toStream.restore();
         });
 
         it('should be a function with 3 arguments', () => {
@@ -179,75 +168,43 @@ describe('generate', () => {
             callback.should.have.been.calledWithExactly(err);
         });
 
-        it('should render a PDF from the unmarshalled data', () => {
+        it('should render a PDF to a stream', () => {
             generate.fileToStream(filename, locals, callback);
-            PDF.prototype.render.should.have.been.calledWithExactly();
-            callback.should.have.been.calledWithExactly(null, stubs.doc);
-        });
-
-        it('should callback a PDF rendering error', () => {
-            let err = new Error();
-            PDF.prototype.render.throws(err);
-            generate.fileToStream(filename, locals, callback);
-            callback.should.have.been.calledWithExactly(err);
+            xmlToPdf.toStream.should.have.been.calledWithExactly(stubs.rendered, 'path/to', callback);
         });
     });
 
     describe('fileToBuffer', () => {
         beforeEach(() => {
-            stubs.doc = {
-                pipe: sinon.stub()
-            };
-            sinon.stub(generate, 'fileToStream').yields(null, stubs.doc);
+            sinon.stub(generate, 'render').yields(null, stubs.rendered);
+            sinon.stub(xmlToPdf, 'toBuffer');
         });
 
         afterEach(() => {
-            generate.fileToStream.restore();
+            generate.render.restore();
+            xmlToPdf.toBuffer.restore();
         });
 
         it('should be a function with 3 arguments', () => {
             generate.fileToBuffer.should.be.a('function').and.have.lengthOf(3);
         });
 
-        it('should call fileToStream', () => {
+        it('should render the template given by the filename', () => {
             generate.fileToBuffer(filename, locals, callback);
-            generate.fileToStream.should.have.been.calledWithExactly(filename, locals, sinon.match.func);
+            generate.render.should.have.been.calledWithExactly(filename, locals, sinon.match.func);
         });
 
-        it('should callback with error from fileToStream', () => {
+        it('should callback with render error', () => {
             let err = new Error();
-            generate.fileToStream.yields(err);
+            generate.render.yields(err);
             generate.fileToBuffer(filename, locals, callback);
             callback.should.have.been.calledWithExactly(err);
         });
 
-        it('should pipe the document to contact to provide a buffer', done => {
+        it('should render a PDF to a stream', () => {
             generate.fileToBuffer(filename, locals, callback);
-            stubs.doc.pipe.should.have.been.calledWithExactly(sinon.match.instanceOf(ConcatStream));
-            let concat = stubs.doc.pipe.getCall(0).args[0];
-            concat.write([1, 2, 3]);
-            concat.write([4, 5, 6]);
-            concat.end();
-            concat.on('finish', () => {
-                callback.should.have.been.calledWithExactly(null, [1, 2, 3, 4, 5, 6]);
-                done();
-            });
+            xmlToPdf.toBuffer.should.have.been.calledWithExactly(stubs.rendered, 'path/to', callback);
         });
-
-        it('should copy the filename from the stream', done => {
-            stubs.doc.filename = 'filename';
-            generate.fileToBuffer(filename, locals, callback);
-            let concat = stubs.doc.pipe.getCall(0).args[0];
-            concat.write([1, 2, 3]);
-            concat.end();
-            concat.on('finish', () => {
-                let data = callback.args[0][1];
-                data.filename.should.equal('filename');
-                done();
-            });
-
-        });
-
     });
 
     describe('fileToFile', () => {
@@ -255,54 +212,35 @@ describe('generate', () => {
 
         beforeEach(() => {
             destFileName = 'destfile';
-            stubs.doc = {
-                pipe: sinon.stub(),
-            };
-            stubs.stream = {
-                on: sinon.stub()
-            };
-            sinon.stub(generate, 'fileToStream').yields(null, stubs.doc);
-            sinon.stub(fs, 'createWriteStream').returns(stubs.stream);
+            sinon.stub(generate, 'render').yields(null, stubs.rendered);
+            sinon.stub(xmlToPdf, 'toFile');
         });
 
         afterEach(() => {
-            generate.fileToStream.restore();
-            fs.createWriteStream.restore();
+            generate.render.restore();
+            xmlToPdf.toFile.restore();
         });
 
         it('should be a function with 4 arguments', () => {
             generate.fileToFile.should.be.a('function').and.have.lengthOf(4);
         });
 
-        it('should call fileToStream', () => {
+        it('should render the template given by the filename', () => {
             generate.fileToFile(filename, locals, destFileName, callback);
-            generate.fileToStream.should.have.been.calledWithExactly(filename, locals, sinon.match.func);
+            generate.render.should.have.been.calledWithExactly(filename, locals, sinon.match.func);
         });
 
-        it('should callback with error from fileToStream', () => {
+        it('should callback with render error', () => {
             let err = new Error();
-            generate.fileToStream.yields(err);
+            generate.render.yields(err);
             generate.fileToFile(filename, locals, destFileName, callback);
             callback.should.have.been.calledWithExactly(err);
         });
 
-        it('should create a file stream with the dest filename', () => {
+        it('should render a PDF to a stream', () => {
             generate.fileToFile(filename, locals, destFileName, callback);
-            fs.createWriteStream.should.have.been.calledWithExactly(destFileName);
+            xmlToPdf.toFile.should.have.been.calledWithExactly(stubs.rendered, 'path/to', destFileName, callback);
         });
-
-        it('should pipe the document to contact to file stream', () => {
-            generate.fileToFile(filename, locals, destFileName, callback);
-            stubs.doc.pipe.should.have.been.calledWithExactly(stubs.stream);
-            callback.should.not.have.been.called;
-        });
-
-        it('should call the callback when the pipe is complete', () => {
-            stubs.stream.on.withArgs('finish').yields(null);
-            generate.fileToFile(filename, locals, destFileName, callback);
-            callback.should.have.been.calledWithExactly(null);
-        });
-
     });
 
     describe('engine', () => {
