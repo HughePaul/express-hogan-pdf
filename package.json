@@ -26,18 +26,18 @@
   "homepage": "https://github.com/HughePaul/express-hogan-pdf",
   "dependencies": {
     "debug": "^4.1.1",
-    "xml-to-pdf": "^1.0.4"
+    "xml-to-pdf": "^1.1.1"
   },
   "peerDependencies": {
     "hogan.js": ">=3"
   },
   "devDependencies": {
-    "hogan.js": "^3.0.2",
     "chai": "^4.2.0",
-    "eslint": "^5.12.1",
+    "eslint": "^5.15.3",
+    "hogan.js": "^3.0.2",
     "istanbul": "^0.4.3",
-    "mocha": "^5.2.0",
-    "sinon": "^7.2.3",
+    "mocha": "^6.0.2",
+    "sinon": "^7.3.0",
     "sinon-chai": "^3.3.0"
   }
 }
